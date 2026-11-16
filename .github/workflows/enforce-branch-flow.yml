@@ -1,0 +1,37 @@
+name: Enforce Branch Flow & Merge Policy
+
+on:
+  pull_request:
+    branches:
+      - main
+      - development
+
+jobs:
+  enforce-branch-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PRs targeting main
+        if: github.base_ref == 'main'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            release/*|hotfix/*)
+              echo "Valid branch flow into main ($HEAD_REF)."
+              ;;
+            *)
+              echo "::error::Only release/* and hotfix/* branches can merge into main."
+              exit 1
+              ;;
+          esac
+
+      - name: Advise merge strategy for development
+        if: github.base_ref == 'development'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" == "main" ]; then
+            echo "Backmerge PR detected (main -> development): Use 'Create a merge commit'."
+          else
+            echo "Standard PR into development: Use 'Squash and merge'."
+          fi
