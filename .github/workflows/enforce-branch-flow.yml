@@ -26,12 +26,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          METHOD: ${{ steps.validate.outputs.method }}
           METHOD_LABEL: ${{ steps.validate.outputs.label }}
           BASE_REF: ${{ github.base_ref }}
           HEAD_REF: ${{ github.head_ref }}
         run: |
           if [[ "$VALIDATE_OUTCOME" == "success" ]]; then
-            body=$(printf 'Branch flow check passed: `%s` -> `%s`\n\n**Merge method:** %s' "$HEAD_REF" "$BASE_REF" "$METHOD_LABEL")
+            case "$METHOD" in
+              merge)  color="blue" ;;
+              squash) color="brightgreen" ;;
+              *)      color="lightgrey" ;;
+            esac
+            badge_label="${METHOD_LABEL// /_}"
+            badge="![Merge method](https://img.shields.io/badge/Merge_method-${badge_label}-${color}?style=for-the-badge)"
+            body=$(printf 'Branch flow check passed: `%s` -> `%s`\n\n%s' "$HEAD_REF" "$BASE_REF" "$badge")
           else
             body=$(printf 'Branch flow check failed: `%s` -> `%s`\n\nSee the job log for the allowed transitions.' "$HEAD_REF" "$BASE_REF")
           fi
