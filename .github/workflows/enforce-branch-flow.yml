@@ -8,30 +8,12 @@ on:
 
 jobs:
   enforce-branch-flow:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # або self-hosted, якщо Actions заблоковані білінгом
     steps:
-      - name: Validate PRs targeting main
-        if: github.base_ref == 'main'
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          case "$HEAD_REF" in
-            release/*|hotfix/*)
-              echo "Valid branch flow into main ($HEAD_REF)."
-              ;;
-            *)
-              echo "::error::Only release/* and hotfix/* branches can merge into main."
-              exit 1
-              ;;
-          esac
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
 
-      - name: Advise merge strategy for development
-        if: github.base_ref == 'development'
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          if [ "$HEAD_REF" == "main" ]; then
-            echo "Backmerge PR detected (main -> development): Use 'Create a merge commit'."
-          else
-            echo "Standard PR into development: Use 'Squash and merge'."
-          fi
+      - name: Validate allowed source -> target branch paths
+        run: bash scripts/check-branch-flow.sh "${{ github.base_ref }}" "${{ github.head_ref }}"
