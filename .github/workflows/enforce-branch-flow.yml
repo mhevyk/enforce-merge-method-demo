@@ -8,33 +8,10 @@ on:
 
 jobs:
   enforce-branch-flow:
-    runs-on: ubuntu-latest # або self-hosted, якщо Actions заблоковані білінгом
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout base branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.base_ref }}
-
-      - name: Debug environment
-        run: |
-          echo "=== Context ==="
-          echo "event_name:  ${{ github.event_name }}"
-          echo "base_ref:    ${{ github.base_ref }}"
-          echo "head_ref:    ${{ github.head_ref }}"
-          echo "sha:         ${{ github.sha }}"
-          echo "workspace:   $GITHUB_WORKSPACE"
-          echo "=== pwd ==="
-          pwd
-          echo "=== git branch / HEAD ==="
-          git branch -a
-          git log --oneline -3
-          echo "=== Workspace root listing ==="
-          ls -la
-          echo "=== .github tree ==="
-          find .github -print 2>/dev/null || echo ".github not found"
-          echo "=== Script lookup ==="
-          ls -la ./.github/scripts/check-branch-flow.sh || echo "script NOT found at ./.github/scripts/check-branch-flow.sh"
-          find . -name "check-branch-flow.sh" -not -path "./.git/*"
+      - name: Checkout PR merge commit
+        uses: actions/checkout@v7
 
       - name: Validate allowed source -> target branch paths
         run: bash ./.github/scripts/check-branch-flow.sh "${{ github.base_ref }}" "${{ github.head_ref }}"
